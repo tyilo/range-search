@@ -49,6 +49,8 @@ impl Predicate<usize> for &[bool] {
 ///
 /// Will never return if `T` has no upper bound and no `f(i) = false` can be
 /// found.
+// TODO: Change `Unsigned` bound to `LowerBounded` when
+// https://github.com/rust-num/num-bigint/pull/330 is merged
 pub fn exponential_search<T: Unsigned + CheckedMul + PartialOrd>(
     f: impl Predicate<T>,
 ) -> Option<(T, T)> {
