@@ -1,22 +1,7 @@
 #![no_std]
 
-use core::ops::{BitAnd, BitXor, Shr};
-
-use num_traits::{Bounded, CheckedAdd, CheckedMul, CheckedSub, Num, Unsigned};
-
-pub trait Midpoint: Num {
-    fn midpoint(&self, rhs: &Self) -> Self;
-}
-
-impl<T> Midpoint for T
-where
-    T: Num + Shr<u8, Output = T>,
-    for<'a> &'a T: BitXor<&'a T, Output = T> + BitAnd<&'a T, Output = T>,
-{
-    fn midpoint(&self, rhs: &Self) -> Self {
-        ((self ^ rhs) >> 1u8) + (self & rhs)
-    }
-}
+use num_integer::Average;
+use num_traits::{Bounded, CheckedAdd, CheckedMul, CheckedSub, Unsigned};
 
 pub trait Predicate<T> {
     fn check(&self, index: &T) -> bool;
@@ -97,7 +82,7 @@ pub fn exponential_search<T: Unsigned + CheckedMul + PartialOrd>(
 }
 
 /// Returns the smallest `i` in `[lo, hi]` where `f(i) = false`.
-pub fn binary_search_range<T: Midpoint + PartialOrd + Clone + CheckedAdd>(
+pub fn binary_search_range<T: Average + PartialOrd + Clone + CheckedAdd>(
     mut lo: T,
     mut hi: T,
     f: impl Predicate<T>,
@@ -119,7 +104,7 @@ pub fn binary_search_range<T: Midpoint + PartialOrd + Clone + CheckedAdd>(
     }
 
     while lo < hi {
-        let mid = lo.midpoint(&hi);
+        let mid = lo.average_floor(&hi);
 
         if f.check(&mid) {
             lo = mid + T::one();
@@ -133,7 +118,7 @@ pub fn binary_search_range<T: Midpoint + PartialOrd + Clone + CheckedAdd>(
 }
 
 /// Returns the smallest `index` where `f(i) = false`.
-pub fn binary_search<T: Midpoint + PartialOrd + Clone + Bounded + CheckedAdd + CheckedSub>(
+pub fn binary_search<T: Average + PartialOrd + Clone + Bounded + CheckedAdd + CheckedSub>(
     f: impl Predicate<T>,
 ) -> Option<T> {
     let hi = match f.last_index_exclusive() {
@@ -149,7 +134,7 @@ pub fn binary_search<T: Midpoint + PartialOrd + Clone + Bounded + CheckedAdd + C
 /// Unlike `binary_search` this doesn't require `T` to be `Bounded`.
 pub fn combined_search<P, T>(f: P) -> Option<T>
 where
-    T: Unsigned + PartialOrd + CheckedMul + Midpoint + PartialOrd + Clone + CheckedAdd,
+    T: Unsigned + PartialOrd + CheckedMul + Average + PartialOrd + Clone + CheckedAdd,
     P: Predicate<T>,
     for<'a> &'a P: Predicate<T>,
 {
